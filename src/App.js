@@ -5,6 +5,7 @@ import ForgotPassword from './components/ForgotPassword';
 import Register from './components/Register';
 import Map from './components/Map';
 import EditAccount from './components/EditAccount'; 
+import Home from './components/Home';
 
 function ProtectedRoute({ element: Component }) {
     const isAuthenticated = true;
@@ -15,7 +16,8 @@ function App() {
     return (
         <Router>
             <Routes>
-                <Route path="/" element={<Login />} />
+                <Route path="/" element={<Home />} />
+                <Route path="/login" element={<Login />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/map" element={<ProtectedRoute element={Map} />} />
