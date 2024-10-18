@@ -1,38 +1,49 @@
-//goated ssala 
 import React, { useState, useEffect } from 'react';
-import { auth, db } from '../firebase'; // Make sure you have Firebase config setup
+import { auth, db } from '../firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+
+const requireContext = require.context('../media/iconoptions', false, /\.png$/);
+const icons = requireContext.keys().map((fileName) => ({
+    name: fileName.replace('./', '').replace('.png', ''),
+    value: requireContext(fileName),
+}));
+
+const defaultIcon = require('../media/iconoptions/default.png');
 
 const EditAccount = () => {
     const [formData, setFormData] = useState({
         username: '',
         email: '',
         password: '',
-        confirmPassword: '', // Added for confirmation
-        profilePic: null, // For file upload
+        confirmPassword: '',
+        selectedIcon: defaultIcon,
     });
 
     const [currentUser, setCurrentUser] = useState(null);
     const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
-    // Fetch current user data from Firestore
     useEffect(() => {
         fetchUserData();
     }, []);
 
     const fetchUserData = async () => {
+        setLoading(true);
         const user = auth.currentUser;
         if (user) {
-            const userDocRef = doc(db, 'users', user.uid); // Get the document reference
+            const userDocRef = doc(db, 'users', user.uid);
             const userDoc = await getDoc(userDocRef);
 
             if (userDoc.exists()) {
                 setCurrentUser(userDoc.data());
+                const profilePicture = userDoc.data().profilePicture || defaultIcon;
                 setFormData({
                     ...formData,
                     username: userDoc.data().displayName,
                     email: userDoc.data().email,
+                    selectedIcon: profilePicture,
                 });
             } else {
                 console.error('No such document in Firestore!');
@@ -41,23 +52,24 @@ const EditAccount = () => {
         } else {
             setError('No user is currently logged in.');
         }
+        setLoading(false);
     };
 
-    // Handle form input changes
     const handleChange = (e) => {
-        const { name, value, type, files } = e.target;
-        if (type === 'file') {
-            setFormData({ ...formData, [name]: files[0] }); // Save the file object
-        } else {
-            setFormData({ ...formData, [name]: value });
-        }
+        const { name, value } = e.target;
+        setFormData({ ...formData, [name]: value });
     };
 
-    // Handle form submission
+    const handleIconChange = (e) => {
+        const selectedIconName = e.target.value; // Get only the icon name
+        const selectedIcon = icons.find(icon => icon.name === selectedIconName)?.value || defaultIcon;
+        setFormData({ ...formData, selectedIcon, selectedIconName }); // Store the icon name in state as well
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setError('');
 
-        // Check if passwords match
         if (formData.password !== formData.confirmPassword) {
             setError('Passwords do not match');
             return;
@@ -71,32 +83,32 @@ const EditAccount = () => {
                 return;
             }
 
-            // Reauthenticate user
+            setLoading(true);
             await signInWithEmailAndPassword(auth, user.email, formData.password);
 
-            // Reference the document
             const userDocRef = doc(db, 'users', user.uid);
             const userDoc = await getDoc(userDocRef);
 
+            // Use only the file name for profilePicture (e.g., "iconName.png")
+            const profilePictureFileName = formData.selectedIcon.split('/').pop(); // Get the icon file name
+
             if (userDoc.exists()) {
-                // Update user information in Firestore
                 await updateDoc(userDocRef, {
                     displayName: formData.username,
                     email: formData.email,
-                    profilePicture: formData.profilePic ? formData.profilePic.name : '',
-                    latitude: '', // Assuming this will be updated later
-                    longitude: '', // Assuming this will be updated later
-                    role: 'Donator', // Set role as needed
+                    profilePicture: profilePictureFileName, // Store only the icon file name
+                    latitude: "", // Update with desired latitude if available
+                    longitude: "", // Update with desired longitude if available
+                    role: "Donator" // Update or keep the role as needed
                 });
             } else {
-                // Create a new user document if it doesn't exist
                 await setDoc(userDocRef, {
                     displayName: formData.username,
                     email: formData.email,
-                    profilePicture: formData.profilePic ? formData.profilePic.name : '',
-                    latitude: '', // Assuming this will be updated later
-                    longitude: '', // Assuming this will be updated later
-                    role: 'Donator', // Set role as needed
+                    profilePicture: profilePictureFileName, // Store only the icon file name
+                    latitude: "", // Update with desired latitude if available
+                    longitude: "", // Update with desired longitude if available
+                    role: "Donator" // Update or keep the role as needed
                 });
             }
 
@@ -104,21 +116,46 @@ const EditAccount = () => {
         } catch (error) {
             console.error('Error updating account:', error);
             setError('Error updating account. Please check your password and try again.');
+        } finally {
+            setLoading(false);
         }
     };
 
-    // Handle account deletion
     const handleDelete = () => {
-        if (window.confirm('Are you sure you want to delete your account?')) {
-            alert('Account deleted successfully');
-            // Implement account deletion logic here
+        setIsDeleteModalOpen(true);
+    };
+
+    const confirmDeleteAccount = async () => {
+        try {
+            const user = auth.currentUser;
+            if (user) {
+                await auth.currentUser.delete(); // Delete user account from Firebase Auth
+                alert('Account deleted successfully');
+                // Optionally, redirect or update UI after deletion
+            } else {
+                setError('No user is currently logged in.');
+            }
+        } catch (error) {
+            console.error('Error deleting account:', error);
+            setError('Error deleting account. Please try again.');
+        } finally {
+            setIsDeleteModalOpen(false);
         }
     };
 
     return (
         <div className="edit-account-container" style={containerStyle}>
             <h2>Edit Account</h2>
+            {loading && <p>Loading...</p>}
             {error && <p style={{ color: 'red' }}>{error}</p>}
+            <div style={{ textAlign: 'center', margin: '20px 0' }}>
+                <img
+                    src={formData.selectedIcon}
+                    alt="Profile"
+                    style={{ width: '100px', height: '100px', borderRadius: '50%' }}
+                />
+            </div>
+
             <form onSubmit={handleSubmit}>
                 <label htmlFor="username">Username:</label>
                 <input
@@ -132,14 +169,20 @@ const EditAccount = () => {
                     style={inputStyle}
                 />
 
-                <label htmlFor="profile-pic">Profile Picture:</label>
-                <input
-                    type="file"
-                    id="profile-pic"
-                    name="profilePic"
-                    onChange={handleChange}
+                <label htmlFor="icon">Profile Picture:</label>
+                <select
+                    id="icon"
+                    name="icon"
+                    value={formData.selectedIcon.split('/').pop()} // Use only the icon name for display
+                    onChange={handleIconChange}
                     style={inputStyle}
-                />
+                >
+                    {icons.map((icon) => (
+                        <option key={icon.name} value={icon.name}>
+                            {icon.name}
+                        </option>
+                    ))}
+                </select>
 
                 <label htmlFor="email">Email:</label>
                 <input
@@ -179,11 +222,18 @@ const EditAccount = () => {
                     Delete Account
                 </button>
             </form>
+
+            {isDeleteModalOpen && (
+                <div style={modalStyle}>
+                    <h3>Are you sure you want to delete your account?</h3>
+                    <button onClick={confirmDeleteAccount} style={confirmButtonStyle}>Yes, Delete</button>
+                    <button onClick={() => setIsDeleteModalOpen(false)} style={cancelButtonStyle}>Cancel</button>
+                </div>
+            )}
         </div>
     );
 };
 
-// Inline styles
 const containerStyle = {
     width: '300px',
     margin: '50px auto',
@@ -214,6 +264,36 @@ const buttonStyle = {
 const deleteButtonStyle = {
     ...buttonStyle,
     backgroundColor: '#f44336',
+};
+
+const modalStyle = {
+    position: 'fixed',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    width: '300px',
+    padding: '20px',
+    backgroundColor: 'white',
+    border: '1px solid #ccc',
+    borderRadius: '10px',
+    boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
+    zIndex: 1000,
+};
+
+const confirmButtonStyle = {
+    ...buttonStyle,
+    backgroundColor: '#f44336',
+};
+
+const cancelButtonStyle = {
+    backgroundColor: '#ccc',
+    color: 'black',
+    border: 'none',
+    padding: '10px',
+    margin: '10px 0',
+    borderRadius: '5px',
+    cursor: 'pointer',
+    width: '100%',
 };
 
 export default EditAccount;
