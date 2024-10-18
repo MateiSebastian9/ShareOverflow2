@@ -19,112 +19,70 @@ const Map = () => {
             const mapInstance = new window.google.maps.Map(document.getElementById('map'), {
                 center: { lat: 44.4268, lng: 26.1025 },
                 zoom: 12,
+                zoomControl: false, // Disable zoom control buttons
                 styles: [
                     {
                         "featureType": "administrative",
                         "elementType": "labels.text.fill",
-                        "stylers": [
-                            {
-                                "color": "#444444"
-                            }
-                        ]
+                        "stylers": [{ "color": "#444444" }]
                     },
                     {
                         "featureType": "transit",
                         "elementType": "all",
-                        "stylers": [
-                            { "visibility": "off" }
-                        ]
+                        "stylers": [{ "visibility": "off" }]
                     },
                     {
                         "featureType": "landscape",
                         "elementType": "all",
-                        "stylers": [
-                            {
-                                "color": "#f2f2f2"
-                            }
-                        ]
+                        "stylers": [{ "color": "#f2f2f2" }]
                     },
                     {
                         "featureType": "poi",
                         "elementType": "all",
-                        "stylers": [
-                            {
-                                "visibility": "off"
-                            }
-                        ]
+                        "stylers": [{ "visibility": "off" }]
                     },
                     {
                         "featureType": "road",
                         "elementType": "all",
                         "stylers": [
-                            {
-                                "saturation": -100
-                            },
-                            {
-                                "lightness": 45
-                            }
+                            { "saturation": -100 },
+                            { "lightness": 45 }
                         ]
                     },
                     {
                         "featureType": "road.highway",
                         "elementType": "all",
-                        "stylers": [
-                            {
-                                "visibility": "simplified"
-                            }
-                        ]
+                        "stylers": [{ "visibility": "simplified" }]
                     },
                     {
                         "featureType": "road.highway",
                         "elementType": "labels.icon",
-                        "stylers": [
-                            { "visibility": "off" }
-                        ]
-                    },                    
-                    {
-                        "featureType": "road.highway",
-                        "elementType": "labels.icon",
-                        "stylers": [
-                            { "visibility": "off" }
-                        ]
+                        "stylers": [{ "visibility": "off" }]
                     },
                     {
                         "featureType": "road.arterial",
                         "elementType": "labels.icon",
-                        "stylers": [
-                            { "visibility": "off" }
-                        ]
+                        "stylers": [{ "visibility": "off" }]
                     },
                     {
                         "featureType": "road.local",
                         "elementType": "labels.icon",
-                        "stylers": [
-                            { "visibility": "off" }
-                        ]
-                    },                    
+                        "stylers": [{ "visibility": "off" }]
+                    },
                     {
                         "featureType": "road.arterial",
                         "elementType": "geometry.fill",
                         "stylers": [
-                            {
-                                "visibility": "on"
-                            },
-                            {
-                                "color": "#d4d1d5"
-                            }
+                            { "visibility": "on" },
+                            { "color": "#d4d1d5" }
                         ]
-                    },                 
+                    },
                     {
                         "featureType": "water",
                         "elementType": "all",
                         "stylers": [
-                            {
-                                "color": "#d4cae3"
-                            },
-                            {
-                                "visibility": "on"
-                            }
+                            { "color": "#d4cae3" },
+                            { "visibility": "on" }
                         ]
                     }
                 ],
@@ -141,14 +99,14 @@ const Map = () => {
 
         const createCustomPin = (color, scale = 1) => {
             return {
-                path: 'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z', // Removed inner circle path
+                path: 'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z',
                 fillColor: color,
-                fillOpacity: 1, // Full opacity for solid color
-                strokeWeight: 0, // Remove the stroke for a solid look
+                fillOpacity: 1,
+                strokeWeight: 0,
                 rotation: 0,
                 scale: scale,
                 anchor: new window.google.maps.Point(12, 24),
-            };;
+            };
         };
 
         const addCustomStyledPins = (mapInstance) => {
@@ -202,9 +160,25 @@ const Map = () => {
         };
     }, []);
 
-    return <div>
-        <div id="map" style={{ height: '100vh', width: '100%', fontFamily: 'Roboto, sans-serif' }} />
-    </div>;
+    return (
+        <div style={styles.container}>
+            <div id="map" style={styles.map} />
+        </div>
+    );
+};
+
+// Styles for the Map component
+const styles = {
+    container: {
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100vh', // Full height of the viewport
+        overflow: 'hidden', // Prevent overflow
+    },
+    map: {
+        flexGrow: 1, // Allow map to grow and fill available space
+        width: '100%',
+    },
 };
 
 export default Map;

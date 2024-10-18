@@ -4,12 +4,20 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext'; // Import the custom hook
 
 const Navbar = () => {
-  const { isLoggedIn, login, logout } = useAuth(); // Get auth state and functions
+  const { isLoggedIn, logout } = useAuth(); // Get auth state and functions
   const navigate = useNavigate(); // Hook for navigation
 
   return (
     <nav style={styles.navbar}>
-      <div style={styles.title}>ShareOverflow</div>
+      <div 
+        style={styles.title} 
+        onClick={() => navigate('/home')} 
+        role="button" 
+        tabIndex={0} 
+        onKeyPress={(e) => e.key === 'Enter' && navigate('/home')}
+      >
+        ShareOverflow
+      </div>
       <div style={styles.middleButtons}>
         {isLoggedIn ? (
           <>
@@ -17,7 +25,10 @@ const Navbar = () => {
             <button className="button" onClick={() => navigate('/dashboard')}>Dashboard</button>
             <button className="button" onClick={() => navigate('/map')}>Map</button>
             <button className="button" onClick={() => navigate('/profile')}>Profile</button>
-            <button className="button" onClick={logout}>Logout</button>
+            <button className="button" onClick={() => {
+              logout(); // Handle logout action
+              navigate('/login'); // Redirect to login page after logout
+            }}>Logout</button>
           </>
         ) : (
           <>
@@ -42,6 +53,7 @@ const styles = {
   },
   title: {
     fontSize: '24px',
+    cursor: 'pointer', // Change cursor to pointer for better UX
   },
   middleButtons: {
     display: 'flex',
