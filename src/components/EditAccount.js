@@ -1,26 +1,32 @@
+//goated ssala 
 import React, { useState, useEffect } from 'react';
-import { getAuth, signInWithEmailAndPassword } from 'firebase/auth'; // Ensure correct import
-import { getFirestore, doc, updateDoc, getDoc } from 'firebase/firestore'; // Import Firestore methods
+import { auth, db } from '../firebase'; // Make sure you have Firebase config setup
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 
 const EditAccount = () => {
     const [formData, setFormData] = useState({
         username: '',
         email: '',
         password: '',
-        confirmPassword: '',
-        profilePic: null // For file upload
+        confirmPassword: '', // Added for confirmation
+        profilePic: null, // For file upload
     });
+
+    const [currentUser, setCurrentUser] = useState(null);
     const [error, setError] = useState('');
-    const [currentUser, setCurrentUser] = useState(null); // Store the current user's data
 
-    const auth = getAuth(); // Get the auth instance
-    const db = getFirestore(); // Get the Firestore instance
+    // Fetch current user data from Firestore
+    useEffect(() => {
+        fetchUserData();
+    }, []);
 
-    // Fetch the current user's data from Firestore (assumes user is logged in)
     const fetchUserData = async () => {
         const user = auth.currentUser;
         if (user) {
-            const userDoc = await getDoc(doc(db, "users", user.uid));
+            const userDocRef = doc(db, 'users', user.uid); // Get the document reference
+            const userDoc = await getDoc(userDocRef);
+
             if (userDoc.exists()) {
                 setCurrentUser(userDoc.data());
                 setFormData({
@@ -28,15 +34,16 @@ const EditAccount = () => {
                     username: userDoc.data().displayName,
                     email: userDoc.data().email,
                 });
+            } else {
+                console.error('No such document in Firestore!');
+                setError('User data not found. Please check your account.');
             }
+        } else {
+            setError('No user is currently logged in.');
         }
     };
 
-    // Call fetchUserData when the component mounts
-    useEffect(() => {
-        fetchUserData();
-    }, []);
-
+    // Handle form input changes
     const handleChange = (e) => {
         const { name, value, type, files } = e.target;
         if (type === 'file') {
@@ -46,50 +53,73 @@ const EditAccount = () => {
         }
     };
 
+    // Handle form submission
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        // Check if passwords match
         if (formData.password !== formData.confirmPassword) {
-            setError("Passwords do not match");
+            setError('Passwords do not match');
             return;
         }
 
         try {
-            // Check if the entered password is correct
             const user = auth.currentUser;
-            await signInWithEmailAndPassword(auth, user.email, formData.password); // Reauthenticate user
 
-            // Update user information in Firestore
-            await updateDoc(doc(db, "users", user.uid), {
-                displayName: formData.username,
-                email: formData.email,
-                profilePicture: formData.profilePic ? formData.profilePic.name : '',
-                latitude: '', // Assuming this will be updated later
-                longitude: '', // Assuming this will be updated later
-                role: 'Donator', // Set role as needed
-            });
+            if (!user) {
+                setError('No user is currently logged in.');
+                return;
+            }
 
-            // If a profile picture is uploaded, handle that logic here (e.g., upload to Firebase Storage)
+            // Reauthenticate user
+            await signInWithEmailAndPassword(auth, user.email, formData.password);
 
-            alert("Account updated successfully!");
+            // Reference the document
+            const userDocRef = doc(db, 'users', user.uid);
+            const userDoc = await getDoc(userDocRef);
+
+            if (userDoc.exists()) {
+                // Update user information in Firestore
+                await updateDoc(userDocRef, {
+                    displayName: formData.username,
+                    email: formData.email,
+                    profilePicture: formData.profilePic ? formData.profilePic.name : '',
+                    latitude: '', // Assuming this will be updated later
+                    longitude: '', // Assuming this will be updated later
+                    role: 'Donator', // Set role as needed
+                });
+            } else {
+                // Create a new user document if it doesn't exist
+                await setDoc(userDocRef, {
+                    displayName: formData.username,
+                    email: formData.email,
+                    profilePicture: formData.profilePic ? formData.profilePic.name : '',
+                    latitude: '', // Assuming this will be updated later
+                    longitude: '', // Assuming this will be updated later
+                    role: 'Donator', // Set role as needed
+                });
+            }
+
+            alert('Account updated successfully!');
         } catch (error) {
-            console.error("Error updating account:", error); // Log the error for debugging
-            setError("Error updating account. Please check your password and try again.");
+            console.error('Error updating account:', error);
+            setError('Error updating account. Please check your password and try again.');
         }
     };
 
+    // Handle account deletion
     const handleDelete = () => {
         if (window.confirm('Are you sure you want to delete your account?')) {
             alert('Account deleted successfully');
-            // Add your logic to delete the account from Firestore and Firebase Auth
+            // Implement account deletion logic here
         }
     };
 
     return (
         <div className="edit-account-container" style={containerStyle}>
             <h2>Edit Account</h2>
+            {error && <p style={{ color: 'red' }}>{error}</p>}
             <form onSubmit={handleSubmit}>
-                {error && <p style={{ color: 'red' }}>{error}</p>}
                 <label htmlFor="username">Username:</label>
                 <input
                     type="text"
@@ -133,10 +163,10 @@ const EditAccount = () => {
                     style={inputStyle}
                 />
 
-                <label htmlFor="confirm-password">Confirm Password:</label>
+                <label htmlFor="confirmPassword">Confirm Password:</label>
                 <input
                     type="password"
-                    id="confirm-password"
+                    id="confirmPassword"
                     name="confirmPassword"
                     value={formData.confirmPassword}
                     onChange={handleChange}
