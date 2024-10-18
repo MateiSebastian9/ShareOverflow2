@@ -8,7 +8,8 @@ import Register from './components/Register';
 import EditAccount from './components/EditAccount'; 
 import Home from './components/Home';
 import Navbar from './components/Navbar';
-import Map from './components/Map'; // Import Map component
+import Map from './components/Map';
+import DashboardDonor from './components/DashboardDonor';
 
 function ProtectedRoute({ element: Component }) {
     const { isLoggedIn } = useAuth(); // Use useAuth to check authentication state
@@ -28,6 +29,7 @@ function App() {
                         <Route path="/forgot-password" element={<ForgotPassword />} />
                         <Route path="/register" element={<Register />} />
                         <Route path="/map" element={<ProtectedRoute element={Map} />} />
+                        <Route path="/dashboard" element={<ProtectedRoute element={DashboardDonor} />} />
                         <Route path="/editaccount" element={<ProtectedRoute element={EditAccount} />} /> {/* Add the EditAccount route */}
                         <Route path="*" element={<Login />} />
                     </Routes>

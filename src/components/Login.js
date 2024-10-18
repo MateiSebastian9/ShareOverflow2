@@ -62,15 +62,15 @@ const styles = {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        height: '80vh',
-        backgroundColor: '#f0f0f0',
+        height: '94vh',  // Adjusted height
+        backgroundColor: '#d6e0e0', // Updated background color
     },
     box: {
         backgroundColor: '#fff',
         padding: '40px',
         borderRadius: '10px',
         boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-        width: '350px',
+        width: '350px',  // Keep the width consistent
         textAlign: 'center',
     },
     heading: {
@@ -88,28 +88,30 @@ const styles = {
         color: '#555',
     },
     input: {
-        width: '100%',
+        width: '325px', // Set width to match previous styles
         padding: '10px',
         borderRadius: '5px',
         border: '1px solid #ccc',
         fontSize: '14px',
     },
     button: {
-        width: '100%',
+        width: '350px',
         padding: '10px',
-        backgroundColor: '#61dafb',
-        color: 'black',
-        border: 'none',
+        backgroundColor: '#6356e5', // Updated button color
+        color: 'white',
+        border: '2px solid black', // Updated border
         borderRadius: '5px',
         fontSize: '16px',
         cursor: 'pointer',
+        opacity: 0.8, // Slightly dim the button
+        boxSizing: 'border-box',
     },
     actions: {
         marginTop: '20px',
     },
     link: {
         display: 'block',
-        color: '#61dafb',
+        color: '#6356e5', // Updated link color
         textDecoration: 'none',
         marginTop: '10px',
     },
