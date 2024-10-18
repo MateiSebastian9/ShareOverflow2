@@ -1,9 +1,22 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 
 const Map = () => {
+    const [map, setMap] = useState(null);
+    const mapRef = useRef(null);
+
     useEffect(() => {
+        // Load Roboto font
+        const link = document.createElement('link');
+        link.href = 'https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap';
+        link.rel = 'stylesheet';
+        document.head.appendChild(link);
+
         const initMap = () => {
-            const map = new window.google.maps.Map(document.getElementById('map'), {
+            if (!window.google) {
+                console.error('Google Maps JavaScript API not loaded');
+                return;
+            }
+            const mapInstance = new window.google.maps.Map(document.getElementById('map'), {
                 center: { lat: 44.4268, lng: 26.1025 },
                 zoom: 12,
                 styles: [
@@ -14,6 +27,13 @@ const Map = () => {
                             {
                                 "color": "#444444"
                             }
+                        ]
+                    },
+                    {
+                        "featureType": "transit",
+                        "elementType": "all",
+                        "stylers": [
+                            { "visibility": "off" }
                         ]
                     },
                     {
@@ -57,16 +77,32 @@ const Map = () => {
                     },
                     {
                         "featureType": "road.highway",
-                        "elementType": "geometry.fill",
+                        "elementType": "labels.icon",
                         "stylers": [
-                            {
-                                "visibility": "on"
-                            },
-                            {
-                                "color": "#a69aba"
-                            }
+                            { "visibility": "off" }
+                        ]
+                    },                    
+                    {
+                        "featureType": "road.highway",
+                        "elementType": "labels.icon",
+                        "stylers": [
+                            { "visibility": "off" }
                         ]
                     },
+                    {
+                        "featureType": "road.arterial",
+                        "elementType": "labels.icon",
+                        "stylers": [
+                            { "visibility": "off" }
+                        ]
+                    },
+                    {
+                        "featureType": "road.local",
+                        "elementType": "labels.icon",
+                        "stylers": [
+                            { "visibility": "off" }
+                        ]
+                    },                    
                     {
                         "featureType": "road.arterial",
                         "elementType": "geometry.fill",
@@ -78,7 +114,7 @@ const Map = () => {
                                 "color": "#d4d1d5"
                             }
                         ]
-                    },
+                    },                 
                     {
                         "featureType": "water",
                         "elementType": "all",
@@ -96,57 +132,77 @@ const Map = () => {
                 mapTypeControl: false,
                 fullscreenControl: false
             });
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        const userLocation = {
-                            lat: position.coords.latitude,
-                            lng: position.coords.longitude,
-                        };
 
-                        // Set the map center to user's location
-                        map.setCenter(userLocation);
+            setMap(mapInstance);
 
-                        // Optional: Add a marker for user's location
-                        new window.google.maps.Marker({
-                            position: userLocation,
-                            map: map,
-                            title: 'You are here!',
-                        });
-                    },
-                    () => {
-                        // Handle error
-                        handleLocationError(true, map.getCenter());
-                    }
-                );
-            } else {
-                // Browser doesn't support Geolocation
-                handleLocationError(false, map.getCenter());
-            }
+            // Add custom styled pins
+            addCustomStyledPins(mapInstance);
         };
 
-        const handleLocationError = (browserHasGeolocation, pos) => {
-            const infoWindow = new window.google.maps.InfoWindow({
-                map: window.map,
-                position: pos,
-                content: browserHasGeolocation
-                    ? 'Error: The Geolocation service failed.'
-                    : 'Error: Your browser doesn\'t support geolocation.',
+        const createCustomPin = (color, scale = 1) => {
+            return {
+                path: 'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z', // Removed inner circle path
+                fillColor: color,
+                fillOpacity: 1, // Full opacity for solid color
+                strokeWeight: 0, // Remove the stroke for a solid look
+                rotation: 0,
+                scale: scale,
+                anchor: new window.google.maps.Point(12, 24),
+            };;
+        };
+
+        const addCustomStyledPins = (mapInstance) => {
+            const pins = [
+                { lat: 44.4268, lng: 26.1025, title: 'Pin 1', color: '#FF0000', scale: 1.5 },
+                { lat: 44.4368, lng: 26.1125, title: 'Pin 2', color: '#00FF00', scale: 1.2 },
+                { lat: 44.4168, lng: 26.0925, title: 'Pin 3', color: '#0000FF', scale: 1.8 },
+            ];
+
+            pins.forEach(pin => {
+                const marker = new window.google.maps.Marker({
+                    position: { lat: pin.lat, lng: pin.lng },
+                    map: mapInstance,
+                    title: pin.title,
+                    icon: createCustomPin(pin.color, pin.scale),
+                });
+
+                const infoWindow = new window.google.maps.InfoWindow({
+                    content: `<div style="font-family: 'Roboto', sans-serif;"><h3>${pin.title}</h3><p>Custom info here</p></div>`
+                });
+
+                marker.addListener('click', () => {
+                    infoWindow.open(mapInstance, marker);
+                });
             });
         };
-            if (window.google) {
-                initMap();
-            } else {
-                const script = document.createElement('script');
-                script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.REACT_APP_MAPS_API_KEY}&callback=initMap`;
-                script.async = true;
-                script.defer = true;
-                window.initMap = initMap;
-                document.body.appendChild(script);
-            }
+
+        const loadGoogleMapsApi = () => {
+            const script = document.createElement('script');
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.REACT_APP_MAPS_API_KEY}&callback=initMap`;
+            script.async = true;
+            script.defer = true;
+            document.body.appendChild(script);
+        };
+
+        // Define the global initMap function
+        window.initMap = initMap;
+
+        // Load the API if it's not already loaded
+        if (!window.google) {
+            loadGoogleMapsApi();
+        } else {
+            initMap();
+        }
+
+        // Cleanup function
+        return () => {
+            const script = document.querySelector('script[src^="https://maps.googleapis.com/maps/api/js"]');
+            if (script) script.remove();
+            if (link) link.remove();
+        };
     }, []);
 
-    return <div id="map" style={{ height: '100vh', width: '100%' }} />;
+    return <div id="map" style={{ height: '100vh', width: '100%', fontFamily: 'Roboto, sans-serif' }} />;
 };
 
 export default Map;
