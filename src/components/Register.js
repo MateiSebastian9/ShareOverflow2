@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { auth, db } from '../firebase'; // Assume db is initialized Firestore
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
+import { useAuth } from '../AuthContext'; // Import the useAuth hook
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
 
 const Register = () => {
     const [email, setEmail] = useState('');
@@ -10,6 +12,8 @@ const Register = () => {
     const [displayName, setDisplayName] = useState(''); // State for display name
     const [role, setRole] = useState('Donator'); // Default role is Donator
     const [error, setError] = useState('');
+    const { login } = useAuth(); // Access the login function from context
+    const navigate = useNavigate(); // Initialize useNavigate
 
     const handleRegister = async (e) => {
         e.preventDefault();
@@ -22,7 +26,7 @@ const Register = () => {
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
 
-            // Store the user's information in Firestore with default values for profilePicture, latitude, and longitude
+            // Store the user's information in Firestore
             await setDoc(doc(db, "users", user.uid), {
                 email: user.email,
                 displayName: displayName, // Save display name
@@ -32,7 +36,9 @@ const Register = () => {
                 role: role,
             });
 
+            login(); // Update auth state after successful registration
             alert("Account created successfully!");
+            navigate('/map'); // Redirect after successful registration
         } catch (error) {
             console.error("Error during registration:", error); // Log the error for debugging
             setError("Error creating account. " + error.message); // Show specific error message

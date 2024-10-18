@@ -202,7 +202,9 @@ const Map = () => {
         };
     }, []);
 
-    return <div id="map" style={{ height: '100vh', width: '100%', fontFamily: 'Roboto, sans-serif' }} />;
+    return <div>
+        <div id="map" style={{ height: '100vh', width: '100%', fontFamily: 'Roboto, sans-serif' }} />
+    </div>;
 };
 
 export default Map;
