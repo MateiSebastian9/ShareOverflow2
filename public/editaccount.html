@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Account</title>
+    <style>
+        .edit-account-container {
+            width: 300px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+        }
+        .edit-account-container h2 {
+            text-align: center;
+        }
+        .edit-account-container input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        .edit-account-container button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .delete-account {
+            background-color: #f44336;
+        }
+    </style>
+</head>
+<body>
+
+<div class="edit-account-container">
+    <h2>Edit Account</h2>
+    <form>
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username" placeholder="Enter new username" required>
+
+        <label for="profile-pic">Profile Picture:</label>
+        <input type="file" id="profile-pic" name="profile-pic">
+
+        <button type="submit">Save Changes</button>
+        <button type="button" class="delete-account">Delete Account</button>
+    </form>
+</div>
+
+<script>
+    document.querySelector('.delete-account').addEventListener('click', function() {
+        if (confirm('Are you sure you want to delete your account?')) {
+            // Call your account deletion logic here
+            alert('Account deleted successfully');
+        }
+    });
+
+    // Add logic here for saving username/profile picture changes
+</script>
+
+</body>
+</html>
