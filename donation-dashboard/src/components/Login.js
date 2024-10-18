@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../firebase';
+import { signInWithEmailAndPassword } from 'firebase/auth'; // Import the function
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -10,8 +11,9 @@ const Login = () => {
     const handleLogin = async (e) => {
         e.preventDefault();
         try {
-            await auth.signInWithEmailAndPassword(email, password);
-            navigate('/map');
+            // Use the signInWithEmailAndPassword function
+            await signInWithEmailAndPassword(auth, email, password);
+            navigate('/map'); // Redirect to map after successful login
         } catch (error) {
             console.error("Error signing in:", error);
         }
