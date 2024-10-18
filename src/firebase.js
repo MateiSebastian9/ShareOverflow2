@@ -1,7 +1,7 @@
 //Fisier Initializare Firebase
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
+import { getAuth, setPersistence, browserSessionPersistence } from "firebase/auth";
 
 const firebaseConfig = {
     apiKey: process.env.REACT_APP_API_KEY,
@@ -16,3 +16,9 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
 export const auth = getAuth(app);
+
+// Set persistence to local
+setPersistence(auth, browserSessionPersistence) // or Auth.Persistence.LOCAL
+    .catch((error) => {
+        console.error("Error setting persistence:", error);
+    });
