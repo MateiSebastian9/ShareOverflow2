@@ -1,14 +1,22 @@
 // Navbar.js
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 
 const Navbar = () => {
     const { isLoggedIn, logout } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
+
+    // Determine if the navbar should be transparent based on the current route
+    const isHomePage = location.pathname === '/home';
+    const navbarStyle = {
+        ...styles.navbar,
+        backgroundColor: isHomePage ? 'transparent' : '#282c34', // Transparent for the home page only
+    };
 
     return (
-        <nav style={styles.navbar}>
+        <nav style={navbarStyle}>
             <div 
                 style={styles.title} 
                 onClick={() => navigate('/home')} 
@@ -46,37 +54,38 @@ const styles = {
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        padding: '17.5px 35px', // Increased from 10px 20px to 17.5px 35px
-        backgroundColor: '#282c34',
-        color: 'white',
+        padding: '17.5px 35px',
+        color: 'white', // Change navbar item color to white
+        transition: 'background-color 0.3s', // Smooth transition for background change
     },
     title: {
-        fontSize: '42px', // Increased from 24px to 42px
+        fontSize: '42px',
         cursor: 'pointer',
+        color: 'white', // Change title font color to white
     },
     middleButtons: {
         display: 'flex',
-        gap: '26.25px', // Increased from 15px to 26.25px
-        marginLeft: '35px', // Increased from 20px to 35px
+        gap: '26.25px',
+        marginLeft: '35px',
     },
 };
 
 // CSS for button styles
 const buttonStyles = `
 .button {
-    padding: 14px 21px; // Increased from 8px 12px to 14px 21px
-    border: 2px solid white;
-    border-radius: 8.75px; // Increased from 5px to 8.75px
+    padding: 14px 21px;
+    border: 2px solid white; // Change border color to white
+    border-radius: 8.75px;
     cursor: pointer;
     background-color: transparent;
-    color: white;
+    color: white; // Change button text color to white
     transition: background-color 0.3s, color 0.3s;
 }
 
 .button:hover {
-    background-color: white;
-    color: black;
-    border-color: black;
+    background-color: white; // Change background on hover to white
+    color: black; // Change text color to black on hover
+    border-color: black; // Change border color to black on hover
 }
 `;
 

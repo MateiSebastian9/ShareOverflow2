@@ -38,7 +38,7 @@ const Register = () => {
 
             login(); // Update auth state after successful registration
             alert("Account created successfully!");
-            navigate('/map'); // Redirect after successful registration
+            navigate('/dashboard'); // Redirect after successful registration
         } catch (error) {
             console.error("Error during registration:", error); // Log the error for debugging
             setError("Error creating account. " + error.message); // Show specific error message
