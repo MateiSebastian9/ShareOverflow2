@@ -31,7 +31,7 @@ function App() {
                         <Route path="/register" element={<Register />} />
                         <Route path="/map" element={<ProtectedRoute element={Map} />} />
                         <Route path="/dashboard" element={<ProtectedRoute element={DashboardDonor} />} />
-                        <Route path="/updatelocationuser" element={<ProtectedRoute component={UpdateLocationUser} />} /> {/* Add the UpdateLocation route */}
+                        <Route path="/updatelocationuser" element={<ProtectedRoute element={UpdateLocationUser} />} /> {/* Add the UpdateLocation route */}
                         <Route path="/editaccount" element={<ProtectedRoute element={EditAccount} />} /> {/* Add the EditAccount route */}
                         <Route path="*" element={<Login />} />
                     </Routes>
