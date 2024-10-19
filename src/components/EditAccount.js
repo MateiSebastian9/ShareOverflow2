@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { auth, db } from '../firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { useNavigate } from 'react-router-dom';
 
 const requireContext = require.context('../media/iconoptions', false, /\.png$/);
 const icons = requireContext.keys().map((fileName) => ({
@@ -12,9 +13,9 @@ const icons = requireContext.keys().map((fileName) => ({
 const defaultIcon = require('../media/iconoptions/default.png');
 
 const EditAccount = () => {
+    const navigate = useNavigate(); // Use useNavigate hook
     const [formData, setFormData] = useState({
         username: '',
-        email: '',
         password: '',
         confirmPassword: '',
         selectedIcon: defaultIcon,
@@ -37,14 +38,16 @@ const EditAccount = () => {
             const userDoc = await getDoc(userDocRef);
 
             if (userDoc.exists()) {
-                setCurrentUser(userDoc.data());
-                const profilePicture = userDoc.data().profilePicture || defaultIcon;
-                setFormData({
-                    ...formData,
-                    username: userDoc.data().displayName,
-                    email: userDoc.data().email,
-                    selectedIcon: profilePicture,
-                });
+                const userData = userDoc.data();
+                setCurrentUser(userData);
+                const profilePicture = userData.profilePicture || defaultIcon;
+                const profileIconPath = icons.find(icon => icon.name === profilePicture.split('.')[0])?.value || defaultIcon;
+
+                setFormData(prevFormData => ({
+                    ...prevFormData,
+                    username: userData.displayName,
+                    selectedIcon: profileIconPath,
+                }));
             } else {
                 console.error('No such document in Firestore!');
                 setError('User data not found. Please check your account.');
@@ -57,13 +60,13 @@ const EditAccount = () => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData({ ...formData, [name]: value });
+        setFormData(prevFormData => ({ ...prevFormData, [name]: value }));
     };
 
     const handleIconChange = (e) => {
-        const selectedIconName = e.target.value; // Get only the icon name
+        const selectedIconName = e.target.value;
         const selectedIcon = icons.find(icon => icon.name === selectedIconName)?.value || defaultIcon;
-        setFormData({ ...formData, selectedIcon, selectedIconName }); // Store the icon name in state as well
+        setFormData(prevFormData => ({ ...prevFormData, selectedIcon }));
     };
 
     const handleSubmit = async (e) => {
@@ -84,33 +87,19 @@ const EditAccount = () => {
             }
 
             setLoading(true);
-            await signInWithEmailAndPassword(auth, user.email, formData.password);
+
+            await signInWithEmailAndPassword(auth, currentUser.email, formData.password);
 
             const userDocRef = doc(db, 'users', user.uid);
-            const userDoc = await getDoc(userDocRef);
+            const profilePictureFileName = formData.selectedIcon.split('/').pop();
 
-            // Use only the file name for profilePicture (e.g., "iconName.png")
-            const profilePictureFileName = formData.selectedIcon.split('/').pop(); // Get the icon file name
-
-            if (userDoc.exists()) {
-                await updateDoc(userDocRef, {
-                    displayName: formData.username,
-                    email: formData.email,
-                    profilePicture: profilePictureFileName, // Store only the icon file name
-                    latitude: "", // Update with desired latitude if available
-                    longitude: "", // Update with desired longitude if available
-                    role: "Donator" // Update or keep the role as needed
-                });
-            } else {
-                await setDoc(userDocRef, {
-                    displayName: formData.username,
-                    email: formData.email,
-                    profilePicture: profilePictureFileName, // Store only the icon file name
-                    latitude: "", // Update with desired latitude if available
-                    longitude: "", // Update with desired longitude if available
-                    role: "Donator" // Update or keep the role as needed
-                });
-            }
+            await updateDoc(userDocRef, {
+                displayName: formData.username,
+                profilePicture: profilePictureFileName,
+                latitude: currentUser.latitude || "", // Keep the latitude value
+                longitude: currentUser.longitude || "", // Keep the longitude value
+                role: "Donator"
+            });
 
             alert('Account updated successfully!');
         } catch (error) {
@@ -129,9 +118,8 @@ const EditAccount = () => {
         try {
             const user = auth.currentUser;
             if (user) {
-                await auth.currentUser.delete(); // Delete user account from Firebase Auth
+                await auth.currentUser.delete();
                 alert('Account deleted successfully');
-                // Optionally, redirect or update UI after deletion
             } else {
                 setError('No user is currently logged in.');
             }
@@ -141,6 +129,11 @@ const EditAccount = () => {
         } finally {
             setIsDeleteModalOpen(false);
         }
+    };
+
+    // Replace history.push with navigate
+    const handleEditLocation = () => {
+        navigate('/updatelocationuser'); // Use navigate here
     };
 
     return (
@@ -173,7 +166,7 @@ const EditAccount = () => {
                 <select
                     id="icon"
                     name="icon"
-                    value={formData.selectedIcon.split('/').pop()} // Use only the icon name for display
+                    value={formData.selectedIcon.split('/').pop()}
                     onChange={handleIconChange}
                     style={inputStyle}
                 >
@@ -184,16 +177,13 @@ const EditAccount = () => {
                     ))}
                 </select>
 
-                <label htmlFor="email">Email:</label>
-                <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
-                    style={inputStyle}
-                />
+                <p><strong>Email:</strong> {currentUser?.email}</p>
+                <p><strong>Latitude:</strong> {currentUser?.latitude || 'Not set'}</p>
+                <p><strong>Longitude:</strong> {currentUser?.longitude || 'Not set'}</p>
+
+                <button type="button" onClick={handleEditLocation} style={buttonStyle}>
+                    Edit Location
+                </button>
 
                 <label htmlFor="password">Password:</label>
                 <input
@@ -276,24 +266,17 @@ const modalStyle = {
     backgroundColor: 'white',
     border: '1px solid #ccc',
     borderRadius: '10px',
-    boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
     zIndex: 1000,
 };
 
 const confirmButtonStyle = {
     ...buttonStyle,
-    backgroundColor: '#f44336',
+    backgroundColor: '#4CAF50',
 };
 
 const cancelButtonStyle = {
-    backgroundColor: '#ccc',
-    color: 'black',
-    border: 'none',
-    padding: '10px',
-    margin: '10px 0',
-    borderRadius: '5px',
-    cursor: 'pointer',
-    width: '100%',
+    ...buttonStyle,
+    backgroundColor: '#f44336',
 };
 
 export default EditAccount;
